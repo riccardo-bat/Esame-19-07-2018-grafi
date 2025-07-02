@@ -4,11 +4,13 @@
 #include <stdbool.h>
 #include "node.h"
 #include "grafi.h"
+#include "coda.h"
 
 //prototipi 
 graph create_graph_file(char* filename);
 void stampa(graph grafo, struct node* arrayNodes);
 struct node* getNodes(char* filename, int* dim_arrayNodes);
+void follow(graph grafo_sn, struct node* arrayNodes, int source_id);
 
 int main(){
     //PUNTO 1
@@ -24,6 +26,11 @@ int main(){
     //il nodo in pos 0 di arrayNodes corrisponde al nodo 1 del grafo
     struct node* arrayNodes = getNodes("node.txt", &dim_arrayNodes);
     stampa(grafo_sn, arrayNodes);
+
+
+    //PUNTO 3b
+    printf("\n--------------------------------------\n");
+    follow(grafo_sn, arrayNodes, 8);
 
 
 
@@ -200,4 +207,46 @@ struct node* getNodes(char* filename, int *dim_arrayNodes){
     if(fclose(fp_nodes) == EOF){printf("\n\nERRORE NELLA CHIUSURA DEL FILE"); exit(EXIT_FAILURE);}
     *dim_arrayNodes = dim;
     return arrayNodes;
+}
+
+/**
+ * @brief Stampo la lista dei nodi che source_id segue direttamente o indirettamente
+ * source_id 1-based
+ * 
+ * @param grafo_sn 
+ * @param arrayNodes 
+ * @param source_id 
+ */
+void follow(graph grafo_sn, struct node* arrayNodes, int source_id){
+    //sfrutta la BFS sui grafi
+    bool* visited = malloc(get_dim(&grafo_sn) * sizeof(bool));
+    for(int i=0; i<get_dim(&grafo_sn); i++) visited[i] = false;
+
+    coda queue = newQueue(); //inserisco i nodi che sono ancora da visitare
+    //nodi coda - 0 based
+    enqueue(&queue, source_id-1);
+    visited[source_id-1] = true;
+
+    printf("\nL'utente %s segue: ", arrayNodes[source_id-1].cont);
+
+    while(!isEmpty(&queue)){
+        //estraggo il nodo in testa
+        tipo_inf extract = dequeue(&queue); //extract è 0-based
+        //se il nodo estratto non è il nodo sorgente ed e' un utente... 
+        if(extract != (source_id-1) && arrayNodes[extract].tipo == 'U')
+            printf("\n\t- %s", arrayNodes[extract].cont);
+
+        //considero tutti i vicini del nodo
+        adj_list cursor = get_adjlist(&grafo_sn, extract+1);
+        while(cursor != NULL){
+            //se quel nodo UTENTE non è ancora entrato in coda... 
+            if(!visited[cursor->node] && arrayNodes[cursor->node].tipo == 'U'){
+                enqueue(&queue, cursor->node);
+                visited[cursor->node] = true;
+            }
+
+            cursor = cursor->next;
+        }
+
+    }
 }

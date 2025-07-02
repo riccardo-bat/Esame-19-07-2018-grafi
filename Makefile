@@ -11,7 +11,7 @@ esame: compito.o coda.o grafi.o
 
 
 #Fase di generazione .o
-compito.o: compito.c grafi.h node.h
+compito.o: compito.c grafi.h node.h coda.h
 	$(CC) $(CFLAGS) -c $^
 
 coda.o: coda.c coda.h 
