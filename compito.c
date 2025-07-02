@@ -126,11 +126,11 @@ void stampa(graph grafo, struct node* arrayNodes){
 
             //in base alla tipologia dei due nodi stabilisco la relazione
             if(source_node.tipo == 'U' && dest_node.tipo == 'U')
-                printf("%s FOLLOW %s", source_node.cont, dest_node.cont);
+                printf("\n%s FOLLOW %s", source_node.cont, dest_node.cont);
             else if(source_node.tipo == 'T' && dest_node.tipo == 'U')
-                printf("%s OWNER %s", source_node.cont, dest_node.cont);
+                printf("\n%s OWNER %s", source_node.cont, dest_node.cont);
             else if(source_node.tipo == 'U' && dest_node.tipo == 'T')
-                printf("%s LIKE %s", source_node.cont, dest_node.cont);
+                printf("\n%s LIKE %s", source_node.cont, dest_node.cont);
             else {printf("\n\nUNEXPECTED ERROR"); exit(EXIT_FAILURE);}
 
 
@@ -147,12 +147,12 @@ void stampa(graph grafo, struct node* arrayNodes){
  */
 struct node* getNodes(char* filename, int *dim_arrayNodes){
     char* mode = "r";
-    *dim_arrayNodes = 0; //dimensione dell'array
 
     FILE* fp_nodes = fopen(filename, mode);
     if(fp_nodes == NULL){printf("\n\nERRORE NELL'APERTURA DEL FILE"); exit(EXIT_FAILURE);} 
 
     struct node* arrayNodes; //array dinamico per contenere i nodi letti
+    int dim = 0;
 
     //ogni nodo prende due righe; nella prima il contenuto, nella seconda il tipo
     int righe_per_nodo = 2; 
@@ -170,6 +170,7 @@ struct node* getNodes(char* filename, int *dim_arrayNodes){
         if(riga_attuale == 1){
             //sto leggendo il contenuto 
             strcpy(tmp.cont, buffer);
+            tmp.cont[sizeof tmp.cont - 1] = '\0';
         } else if(riga_attuale == 2){
             //sto leggendo il tipo 
             tmp.tipo = buffer[0];
@@ -178,15 +179,15 @@ struct node* getNodes(char* filename, int *dim_arrayNodes){
         //se ho finito di leggere un intero nodo
         if(riga_attuale == righe_per_nodo){
             //salvo quel nodo nell'array
-            *dim_arrayNodes = *dim_arrayNodes + 1; //aumento la dimensione che l'array avrà
-            if(*dim_arrayNodes == 1) arrayNodes = malloc(*dim_arrayNodes * sizeof(struct node));
-            else arrayNodes = realloc(arrayNodes, *dim_arrayNodes);
-            arrayNodes[*dim_arrayNodes-1] = tmp; 
+            dim = dim + 1; //aumento la dimensione che l'array avrà
+            if(dim == 1) arrayNodes = malloc(dim * sizeof(struct node));
+            else arrayNodes = realloc(arrayNodes, dim * sizeof(struct node));
+            arrayNodes[dim-1] = tmp; 
 
             //printf("\nNodo appena inserito: %s di tipo %c", tmp.cont, tmp.tipo);
 
             //ripristino i valori di tmp 
-            strcpy(tmp.cont, " ");
+            tmp.cont[0] = '\0';
             tmp.tipo = ' '; 
 
             riga_attuale = 1;
@@ -197,5 +198,6 @@ struct node* getNodes(char* filename, int *dim_arrayNodes){
 
     //chiusura file
     if(fclose(fp_nodes) == EOF){printf("\n\nERRORE NELLA CHIUSURA DEL FILE"); exit(EXIT_FAILURE);}
+    *dim_arrayNodes = dim;
     return arrayNodes;
 }
