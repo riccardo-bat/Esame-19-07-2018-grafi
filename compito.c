@@ -290,7 +290,7 @@ int* totalLike(graph grafo_sn, struct node* arrayNodes){
                 int node_owner_tweet = find_owner_tweet(grafo_sn, arrayNodes, cursor->node);
                 //owner_tweet 0-based
                 //printf("\nL'OWNER DEL TWEET E' %s", arrayNodes[node_owner_tweet].cont);
-                if(node_owner_tweet == 1){printf("\n\nIL TWEET NON HA OWNER"); exit(EXIT_FAILURE);}
+                if(node_owner_tweet == -1){printf("\n\nIL TWEET NON HA OWNER"); exit(EXIT_FAILURE);}
                 likes[node_owner_tweet] += 1; //node_ownder_tweet ha ricevuto +1 like per un suo tweet
             }   
 
