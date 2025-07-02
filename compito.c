@@ -11,6 +11,8 @@ graph create_graph_file(char* filename);
 void stampa(graph grafo, struct node* arrayNodes);
 struct node* getNodes(char* filename, int* dim_arrayNodes);
 void follow(graph grafo_sn, struct node* arrayNodes, int source_id);
+int* totalLike(graph grafo_sn, struct node* arrayNodes);
+int find_owner_tweet(graph grafo_sn, struct node* arrayNodes, int id_node_tweet);
 
 int main(){
     //PUNTO 1
@@ -31,6 +33,27 @@ int main(){
     //PUNTO 3b
     printf("\n--------------------------------------\n");
     follow(grafo_sn, arrayNodes, 8);
+
+    //PUNTO 3a
+    printf("\n--------------------------------------\n");
+    int* likes = totalLike(grafo_sn, arrayNodes);
+
+    //trovo il numero di like massimo 
+    //dim_likes = dim del grafo
+    int max = likes[0];
+    for(int i=1; i<get_dim(&grafo_sn); i++){
+        if(likes[i] > max)
+            max = likes[i];
+    }
+
+    //ora stampo tutti i nodi che sono i MIP
+    printf("\nElenco dei MIP: "); 
+    for(int i=0; i<get_dim(&grafo_sn); i++){
+        if(likes[i] == max){ 
+            //all'indice i e' presente l'id del nodo 0-based
+            printf("\n\t%s", arrayNodes[i].cont);
+        }
+    }
 
 
 
@@ -114,14 +137,6 @@ void stampa(graph grafo, struct node* arrayNodes){
     //i nodi sono 1-based, ed ogni nodo ha il proprio id in pos id-1 nell'array arrayNodes
     //scorro l'array dei ptr del grafo
     for(int i=0; i<get_dim(&grafo); i++){
-        /*printf("\nNodo %d (lista dei vicini) --> ", i+1);
-
-        //scorro la lista di adiancenza del nodo i+1 per vedere i suoi vicini 
-        adj_list cursor = get_adjlist(&grafo, i+1);
-        while(cursor != NULL){
-            printf("\t%d", (cursor->node+1) );
-            cursor = cursor->next;
-        }*/
         //i 0-based 
         struct node source_node = arrayNodes[i];
 
@@ -249,4 +264,63 @@ void follow(graph grafo_sn, struct node* arrayNodes, int source_id){
         }
 
     }
+}
+
+/**
+ * @brief Restituisce un vettore dove ogni v[i] indica il numero di like ricevuti ai tweet di i+1 solo se i+1 e' un utente
+ * 
+ * @param grafo_sn 
+ * @param arrayNodes 
+ * @return int* 
+ */
+int* totalLike(graph grafo_sn, struct node* arrayNodes){
+    int* likes = calloc(get_dim(&grafo_sn), sizeof(int));
+    if(likes == NULL){printf("\n\nERRORE NELL'ALLOCAZIONE DELL'ARRAY LIKES"); exit(EXIT_FAILURE);}
+    //printf("\nDENTRO TOTAL LIKE");
+
+    //scorro la lista di adiacenza di tutti i nodi utente
+    for(int i=0; i<get_dim(&grafo_sn) && arrayNodes[i].tipo == 'U'; i++){
+        //vado alla ricerca dei LIKE, cioè degli archi utente-->tweet
+        //printf("\n\nPRENDO LA LISTA DI %s", arrayNodes[i].cont);
+        adj_list cursor = get_adjlist(&grafo_sn, i+1);
+        while(cursor != NULL){
+            //se ho trovato un arco utente->tweet (LIKE)
+            if(arrayNodes[cursor->node].tipo == 'T'){
+                //printf("\nTROVATO UN TWEET che piace: %s", arrayNodes[cursor->node].cont);
+                int node_owner_tweet = find_owner_tweet(grafo_sn, arrayNodes, cursor->node);
+                //owner_tweet 0-based
+                //printf("\nL'OWNER DEL TWEET E' %s", arrayNodes[node_owner_tweet].cont);
+                if(node_owner_tweet == 1){printf("\n\nIL TWEET NON HA OWNER"); exit(EXIT_FAILURE);}
+                likes[node_owner_tweet] += 1; //node_ownder_tweet ha ricevuto +1 like per un suo tweet
+            }   
+
+            cursor = cursor->next;
+        }
+
+    }
+
+    return likes;
+}
+
+/**
+ * @brief Cerca il proprietario di un tweet dato il suo id 0-based
+ * 
+ * @param grafo_sn 
+ * @param arrayNodes 
+ * @param id_node_tweet 
+ * @return int 
+ */
+int find_owner_tweet(graph grafo_sn, struct node* arrayNodes, int id_node_tweet){
+    //vado a cercare la relazione tweet - utente
+    adj_list cursor = get_adjlist(&grafo_sn, id_node_tweet+1); 
+    while(cursor != NULL){
+        //se il nodo vicino al tweet e' di tipo utente, allora si è trovato l'OWNER
+        if(arrayNodes[cursor->node].tipo == 'U')
+            return cursor->node;      
+            
+        cursor = cursor->next;
+    }
+
+    //se l'owner non esiste
+    return -1;
 }
